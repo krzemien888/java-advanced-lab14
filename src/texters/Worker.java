@@ -8,9 +8,15 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import analizers.CharacterCounter;
+import analizers.IAnalizer;
+import analizers.MostUsedWord;
+import analizers.VowelAndconsonantCompare;
+import analizers.VowelHistogram;
 import texters.WorkerManager.Cache;
 
 
@@ -19,17 +25,24 @@ public class Worker extends Thread {
 	private String directoryPath;
 	private Cache cache;
 	private boolean work;
+	private ArrayList<IAnalizer> analizers;
 	
 	public Worker(String directoryPath, Cache cache) {
 		this.directoryPath = directoryPath;
 		this.work = false;
 		this.cache = cache;
+		this.analizers = new ArrayList<>();
+		this.analizers.add(new CharacterCounter());
+		this.analizers.add(new MostUsedWord());
+		this.analizers.add(new VowelAndconsonantCompare());
+		this.analizers.add(new VowelHistogram());
 	}
 	
 	@Override
 	public void run() {
 		this.work = true;
-		while(this.work) {
+		while(this.work) {      
+			long startTime = System.currentTimeMillis();
 			File[] textFiles = this.getFiles();
 			File randomFile = this.getRandomFile(textFiles);
 			String fileContent = this.cache.get(randomFile.getAbsolutePath());
@@ -44,7 +57,18 @@ public class Worker extends Thread {
 					e.printStackTrace();
 				}
 			}
-			message = this.getName() + " choose " + randomFile + " file char count: " + fileContent.length() + " (cache hit: " + cacheHit + ")";
+			long stopTime = System.currentTimeMillis();
+		    long readTime = stopTime - startTime;
+		    IAnalizer analizer = this.getRandomAnalizer();
+		    startTime =  System.currentTimeMillis();
+		    String analizerMessage = analizer.getName() + " - " + analizer.apply(fileContent);
+		    stopTime =  System.currentTimeMillis();
+		    long analizeTime = stopTime - startTime;
+		    StringBuilder builder = new StringBuilder();
+		    builder.append(this.getName() + "(cache hit: " + cacheHit + "): ");
+		    builder.append(randomFile.getName() + " | readTime: " + readTime + "| analizeTime: " + analizeTime + "|");
+		    builder.append(analizerMessage);
+			message =  builder.toString();
 			System.out.println(message);
 		}
 	}
@@ -69,5 +93,10 @@ public class Worker extends Thread {
 	
 	public void stopWorking() {
 		this.work = false;
+	}
+	
+	private IAnalizer getRandomAnalizer() {
+		int choosenAnalizerIndex = ThreadLocalRandom.current().nextInt(0, this.analizers.size());
+		return this.analizers.get(choosenAnalizerIndex);
 	}
 }

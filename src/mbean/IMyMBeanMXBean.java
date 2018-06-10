@@ -7,9 +7,9 @@ public interface IMyMBeanMXBean {
     public void setCacheSize(int cacheSize);
     public int getCacheSize();
     
-    public void setWorkingDirectory(String workingDirectory);
     public String getWorkingDirectory();
+    public String getCacheHitRatio();
     
-    public String doConfig();
+    public String doInfo();
 
 }

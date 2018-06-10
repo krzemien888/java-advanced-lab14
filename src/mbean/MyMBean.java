@@ -50,28 +50,28 @@ public class MyMBean implements IMyMBeanMXBean {
     }
     
     @Override
-    public String doConfig(){
+    public String doInfo(){
     	StringBuilder builder = new StringBuilder();
     	builder.append("Current cache size: " + this.manager.cache.getSize() + "\n");
     	builder.append("Current cache max size: " + this.manager.cache.getCacheMaxSize() + "\n");
     	builder.append("Current cache hit count: " + this.manager.cache.getCacheHitCount() + "\n");
     	builder.append("Current cache request count: " + this.manager.cache.getCacheRequests() + "\n");
-    	float hitRatio = ((float)this.manager.cache.getCacheHitCount()) / ((float)this.manager.cache.getCacheRequests()); 
-    	builder.append("Current cache hit ratio: " + hitRatio + "\n");
+    	builder.append("Current cache hit ratio: " + this.getCacheHitRatio() + "\n");
     	
     	builder.append("Current thread working: " + this.manager.getWorkersAmount() + "\n");
     	builder.append("Current working directory: " + this.manager.getWorkingDirectory() + "\n");
+    	builder.append("Files in directory: " + this.manager.getFilesInDirectory() + "\n");
     	return builder.toString();
     }
 
 	@Override
-	public void setWorkingDirectory(String workingDirectory) {
-		this.workingDirectory = workingDirectory;
+	public String getWorkingDirectory() {	
+		return this.workingDirectory;
 	}
 
 	@Override
-	public String getWorkingDirectory() {	
-		return this.workingDirectory;
+	public String getCacheHitRatio() {
+		return Float.toString(((float)this.manager.cache.getCacheHitCount()) / ((float)this.manager.cache.getCacheRequests())); 
 	}
 
 }

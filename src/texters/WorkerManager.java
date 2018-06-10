@@ -1,5 +1,7 @@
 package texters;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,16 +81,14 @@ public class WorkerManager {
 	public class Cache {
 		private Map<String, String> cacheMap;
 		private int cacheMaxSize;
-		private int cacheCurrentSize;
 		private int cacheHitCount;
 		private int cacheRequests;
 		
 		public Cache(int cacheMaxSize) {
 			this.cacheMap = new HashMap<>();
 			this.cacheMaxSize = cacheMaxSize;
-			this.setCacheCurrentSize(0);
-			this.setCacheCurrentSize(0);
 			this.setCacheRequests(0);
+			this.setCacheHitCount(0);
 		}
 		
 		public synchronized String get(String key) {
@@ -108,10 +108,12 @@ public class WorkerManager {
 		}
 		
 		private void removeRandom() {
-			Object[] keyArray = this.cacheMap.keySet().toArray();
-			int randomIndex = ThreadLocalRandom.current().nextInt(0, keyArray.length);
-			Object randomKey = keyArray[randomIndex];
-			this.cacheMap.remove(randomKey);
+			if(!this.cacheMap.isEmpty()) {
+				Object[] keyArray = this.cacheMap.keySet().toArray();
+				int randomIndex = ThreadLocalRandom.current().nextInt(0, keyArray.length);
+				Object randomKey = keyArray[randomIndex];
+				this.cacheMap.remove(randomKey);	
+			}
 		}
 		
 		public int getCacheRequests() {
@@ -131,11 +133,7 @@ public class WorkerManager {
 		}
 
 		public int getCacheCurrentSize() {
-			return cacheCurrentSize;
-		}
-
-		public void setCacheCurrentSize(int cacheCurrentSize) {
-			this.cacheCurrentSize = cacheCurrentSize;
+			return this.cacheMap.size();
 		}
 		
 		public int getCacheMaxSize() {
@@ -143,8 +141,8 @@ public class WorkerManager {
 		}
 		
 		public void setCacheMaxSize(int cacheMaxSize) {
-			if(cacheMaxSize < this.cacheMaxSize) {
-				while(cacheMaxSize != this.cacheMaxSize) {
+			if(cacheMaxSize < this.getCacheCurrentSize()) {
+				while(cacheMaxSize < this.getCacheCurrentSize()) {
 					this.removeRandom();					
 				}
 			}
@@ -154,6 +152,17 @@ public class WorkerManager {
 		public int getSize() {
 			return this.cacheMap.size();
 		}
+	}
+
+	public String getFilesInDirectory() {
+		File directory = new File(this.workingDirectory);
+		File[] files = directory.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String filename) {
+				return filename.endsWith(".txt");
+			}
+		});
+		
+		return Integer.toString(files.length);
 	}
 
 }
